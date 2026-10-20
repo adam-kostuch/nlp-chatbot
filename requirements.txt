@@ -1,0 +1,8 @@
+jupyter
+slack-bolt
+python-dotenv
+nltk
+spacy>=3.8,<3.9
+scikit-learn
+pystempel
+https://github.com/explosion/spacy-models/releases/download/pl_core_news_sm-3.8.0/pl_core_news_sm-3.8.0-py3-none-any.whl

@@ -1,0 +1,34 @@
+display_information:
+  name: TODO NLP Bot
+features:
+  app_home:
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: todo-nlp-bot
+  slash_commands:
+    - command: /tasks
+      description: Lista zadań
+    - command: /add
+      description: Dodaj zadanie
+      usage_hint: "[treść] | [id zadania nadrzędnego]"
+    - command: /update
+      description: Zmień treść lub status zadania
+      usage_hint: "[id] [nowa treść] albo [id] status=done"
+    - command: /delete
+      description: Usuń zadanie
+      usage_hint: "[id]"
+    - command: /task
+      description: Operacja NLP na zadaniu
+      usage_hint: "[id] [tokens|clean|normalize|unigram|bigram|trigram|xgram|bow|tfidf|stem|lemma|stopwords]"
+oauth_config:
+  scopes:
+    bot:
+      - commands
+      - chat:write
+      - im:history
+settings:
+  event_subscriptions:
+    bot_events:
+      - message.im
+  socket_mode_enabled: true

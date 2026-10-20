@@ -34,6 +34,9 @@ jupyter notebook chatbot.ipynb
 | `/update [id] [nowa treść]` | zmienia treść zadania; `/update [id] status=done` zmienia status |
 | `/delete [id]` | usuwa zadanie |
 | `/task [id] [operacja]` | wykonuje operację NLP na treści zadania |
+| `/prepare_data_for_classification [todo\|20newsgroups]` | nadaje etykiety zadaniom TODO (`praca`, `dom`, `nauka`) albo wczytuje 4 tematy z 20 Newsgroups; wybrany zbiór staje się aktywny |
+| `/classifier cleaning "tekst" [bow\|tfidf\|embedding] [svm\|logreg]` | klasyfikuje tekst (po `clean_text`) i zwraca klasę z prawdopodobieństwem |
+| `/evaluate [bow\|tfidf\|embedding] [svm\|logreg]` | macierz pomyłek oraz ACC, ERR, Precision, Recall i F1 na zbiorze testowym |
 
 Przykład:
 
@@ -55,6 +58,7 @@ Utworzono zadanie: 550e8400-e29b-41d4-a716-446655440000
 | `status` | `todo`, `in_progress` lub `done` |
 | `created_at` | data utworzenia |
 | `updated_at` | data ostatniej modyfikacji |
+| `label` | klasa zadania nadawana przez `/prepare_data_for_classification` |
 
 ## Operacje NLP
 
@@ -86,3 +90,26 @@ Słownik jest budowany na treściach wszystkich zadań, a bot pokazuje wektor wy
 | `use_idf` (TF-IDF) | `True` | słowa występujące w wielu zadaniach dostają mniejszą wagę |
 | `smooth_idf` (TF-IDF) | `True` | do liczników IDF dodawane jest 1, żeby uniknąć dzielenia przez zero |
 | `sublinear_tf` (TF-IDF) | `True` | zamiast liczby wystąpień używane jest 1 + log(TF), żeby powtórzenia nie dominowały |
+
+## Klasyfikacja tekstu
+
+- **Metody:** Linear SVM (`LinearSVC` + `CalibratedClassifierCV` dla prawdopodobieństw) i Logistic Regression – alfabetycznie najbliższe literze K.
+- **Reprezentacje:** BoW, TF-IDF oraz embedding `paraphrase-multilingual-MiniLM-L12-v2` (sentence-transformers).
+- **Dane:** 75 zadań TODO z etykietami z słów kluczowych oraz 3807 wiadomości z 20 Newsgroups (grafika, hokej, medycyna, kosmos); podział 80/20, stratyfikowany, `random_state=42`.
+
+| Zbiór | Reprezentacja | Metoda | ACC | ERR | F1 (macro) |
+| --- | --- | --- | --- | --- | --- |
+| 20 Newsgroups | BoW | SVM | 0.837 | 0.163 | 0.837 |
+| 20 Newsgroups | BoW | LogReg | 0.854 | 0.146 | 0.855 |
+| 20 Newsgroups | TF-IDF | SVM | 0.916 | 0.084 | 0.916 |
+| 20 Newsgroups | TF-IDF | LogReg | 0.899 | 0.101 | 0.899 |
+| 20 Newsgroups | Embedding | SVM | **0.927** | **0.073** | **0.926** |
+| 20 Newsgroups | Embedding | LogReg | 0.923 | 0.077 | 0.922 |
+| TODO | BoW | SVM | 0.600 | 0.400 | 0.589 |
+| TODO | BoW | LogReg | 0.533 | 0.467 | 0.484 |
+| TODO | TF-IDF | SVM | 0.667 | 0.333 | 0.667 |
+| TODO | TF-IDF | LogReg | 0.733 | 0.267 | 0.731 |
+| TODO | Embedding | SVM | 1.000 | 0.000 | 1.000 |
+| TODO | Embedding | LogReg | 1.000 | 0.000 | 1.000 |
+
+Macierze pomyłek, metryki dla każdej klasy, walidacja na własnych zdaniach i wnioski są w notatniku (sekcja 6).

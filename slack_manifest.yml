@@ -21,6 +21,15 @@ features:
     - command: /task
       description: Operacja NLP na zadaniu
       usage_hint: "[id] [tokens|clean|normalize|unigram|bigram|trigram|xgram|bow|tfidf|stem|lemma|stopwords]"
+    - command: /prepare_data_for_classification
+      description: Przygotuj dane z etykietami
+      usage_hint: "[todo|20newsgroups]"
+    - command: /classifier
+      description: Klasyfikuj tekst
+      usage_hint: "cleaning \"tekst\" [bow|tfidf|embedding] [svm|logreg]"
+    - command: /evaluate
+      description: Macierz pomyłek i metryki
+      usage_hint: "[bow|tfidf|embedding] [svm|logreg]"
 oauth_config:
   scopes:
     bot:

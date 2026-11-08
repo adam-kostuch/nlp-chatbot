@@ -6,6 +6,7 @@ Bot w Slacku do zarządzania listą zadań TODO, który wykonuje operacje NLP na
 
 - `chatbot.ipynb` – cały kod bota: baza zadań (SQLite), operacje NLP, komendy i połączenie ze Slackiem
 - `slack_manifest.yml` – konfiguracja aplikacji Slack
+- `sentiment_bot.ipynb` – zadanie projektowe: Discord Sentiment Bot (opis na końcu pliku)
 
 ## Uruchomienie
 
@@ -113,3 +114,57 @@ Słownik jest budowany na treściach wszystkich zadań, a bot pokazuje wektor wy
 | TODO | Embedding | LogReg | 1.000 | 0.000 | 1.000 |
 
 Macierze pomyłek, metryki dla każdej klasy, walidacja na własnych zdaniach i wnioski są w notatniku (sekcja 6).
+
+---
+
+# Discord Sentiment Bot (RNN, LSTM, GRU)
+
+Bot Discord, który ocenia sentyment angielskiego tekstu (negatywny / neutralny / pozytywny) trzema własnymi sieciami rekurencyjnymi wytrenowanymi w PyTorch. Nie korzysta z Transformerów ani zewnętrznych API.
+
+## Pliki
+
+- `sentiment_bot.ipynb`: dane, tokenizacja, trening RNN/LSTM/GRU, porównanie, eksperymenty i bot Discord.
+- `RAPORT.md`: tabela wyników, macierze pomyłek, eksperymenty, przykłady i wnioski.
+- `models/`: zapisane wagi (`rnn.pt`, `lstm.pt`, `gru.pt`), słownik (`vocab.json`) oraz czasy treningu (`train_times.json`).
+- `report/`: macierze pomyłek.
+
+## Konfiguracja Discorda
+
+1. Na [discord.com/developers/applications](https://discord.com/developers/applications) kliknij **New Application**.
+2. W zakładce **Bot** kliknij **Reset Token** i skopiuj token do `DISCORD_TOKEN` w pliku `.env`. Bot nie potrzebuje żadnych „Privileged Gateway Intents”.
+3. W zakładce **OAuth2 → URL Generator** zaznacz scope `bot` i `applications.commands`, a w uprawnieniach **Send Messages**. Otwórz wygenerowany link i dodaj bota do swojego serwera.
+4. W Discordzie włącz **Ustawienia → Zaawansowane → Tryb dewelopera**. Kliknij prawym przyciskiem nazwę serwera, wybierz **Kopiuj ID serwera** i wpisz je do `DISCORD_GUILD_ID`.
+
+## Uruchomienie
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env      # jeśli jeszcze nie ma; uzupełnij DISCORD_TOKEN i DISCORD_GUILD_ID
+jupyter notebook sentiment_bot.ipynb
+```
+
+Uruchom komórki po kolei. Gotowe wagi są w `models/`, więc trening jest pomijany i cały notatnik wykonuje się w kilkanaście sekund. Przedostatnia komórka startuje bota, a ostatnia (`await client.close()`) go zatrzymuje.
+
+Żeby wytrenować modele od nowa, ustaw `RETRAIN = True` w pierwszej komórce albo usuń folder `models/`. Trening trwa około 3,5 minuty na CPU.
+
+## Komendy
+
+| Komenda | Opis |
+| --- | --- |
+| `/sentiment <tekst>` | sentyment aktywnego modelu: klasa i pewność |
+| `/model <rnn\|lstm\|gru>` | zmiana aktywnego modelu (wagi są już w pamięci, bez ponownego treningu) |
+| `/compare <tekst>` | wynik i pewność wszystkich trzech modeli oraz informacja, czy są zgodne |
+| `/stats` | wyniki modeli na zbiorze testowym oraz liczniki użycia w bieżącej sesji |
+
+Bot przetwarza tylko tekst wpisany w komendzie. Nie czyta innych wiadomości (nie ma uprawnienia *Message Content*) i nie zapisuje historii; `/stats` przechowuje wyłącznie liczniki.
+
+## Wyniki (zbiór testowy TweetEval, 12 284 tweety)
+
+| Model | Accuracy | Precision | Recall | F1 (macro) | Trening [s] | Predykcja [ms] |
+| --- | --- | --- | --- | --- | --- | --- |
+| RNN | 0.556 | 0.546 | 0.565 | 0.551 | 32 | 0.18 |
+| **LSTM** | **0.585** | **0.577** | 0.579 | **0.577** | 96 | 0.39 |
+| GRU | 0.577 | 0.565 | **0.582** | 0.571 | 80 | 0.36 |
+
+Szczegóły i wnioski są w `RAPORT.md`.
